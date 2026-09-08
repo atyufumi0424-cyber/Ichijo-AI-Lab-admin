@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f4f7ff">
-  <title>Ichijo AI Lab 管理者ページ</title><link rel="stylesheet" href="assets/style.css">
+  <title>Ichijo AI Lab 管理者ページ</title><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/image.css">
 </head>
 <body>
   <section id="login-screen" class="login-screen">
     <form id="login-form" class="login-card">
       <a class="brand" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/"><span class="brand-mark">AI</span><span>Ichijo AI Lab</span></a>
-      <p class="eyebrow">ADMIN LOGIN</p><h1>管理者ログイン</h1><p>登録済みの管理者メールアドレスとパスワードを入力してください。</p>
-      <label>メールアドレス<input type="email" name="email" autocomplete="username" required></label><label>パスワード<input type="password" name="password" autocomplete="current-password" minlength="8" required></label>
+      <p class="eyebrow">ADMIN LOGIN</p><h1>管理者ログイン</h1><p>管理者パスワードを入力してください。</p>
+      <label>パスワード<input type="password" name="password" autocomplete="current-password" minlength="8" required autofocus></label>
       <button class="button primary" type="submit">ログイン</button><p id="login-status" class="status" role="status"></p>
     </form>
   </section>
@@ -19,7 +19,7 @@
     <div class="content">
       <section class="panel active" id="panel-overview"><div class="title"><div><p class="eyebrow">DASHBOARD</p><h2>活動を更新する</h2></div><span class="pill">SECURE ADMIN</span></div><div class="stats"><article><span>公開アプリ</span><strong id="app-count">0</strong></article><article><span>ブログ記事</span><strong id="post-count">0</strong></article><article><span>受信内容</span><strong id="message-count">0</strong></article></div><div class="card"><h3>Ichijo AI Lab 管理システム</h3><p>ここで追加した内容はSupabaseに保存され、閲覧サイトへ反映されます。</p></div></section>
       <section class="panel" id="panel-apps"><div class="title"><div><p class="eyebrow">APPLICATIONS</p><h2>アプリ管理</h2></div></div><form id="app-form" class="form"><label>アプリ名<input name="title" required></label><label>カテゴリ<input name="category" placeholder="学習 / 地域課題" required></label><label class="wide">説明<textarea name="description" rows="3" required></textarea></label><label>外部リンク（任意）<input type="url" name="url" placeholder="https://"></label><label class="wide">アプリコード<textarea name="code" rows="12" spellcheck="false" placeholder="HTML・CSS・JavaScriptを貼り付けてください"></textarea></label><p class="help wide">1つのHTMLファイルにまとめたコードがおすすめです。</p><button class="button primary" type="submit">処理してアプリを追加</button></form><div id="admin-app-list" class="list"></div></section>
-      <section class="panel" id="panel-posts"><div class="title"><div><p class="eyebrow">BLOG</p><h2>ブログ管理</h2></div></div><form id="post-form" class="form"><label>タイトル<input name="title" required></label><label>日付<input type="date" name="date" required></label><label class="wide">概要<textarea name="excerpt" rows="4" required></textarea></label><button class="button primary" type="submit">記事を追加</button></form><div id="admin-post-list" class="list"></div></section>
+      <section class="panel" id="panel-posts"><div class="title"><div><p class="eyebrow">BLOG</p><h2>ブログ管理</h2></div></div><form id="post-form" class="form"><label>タイトル<input name="title" required></label><label>日付<input type="date" name="date" required></label><label class="wide">概要<textarea name="excerpt" rows="4" required></textarea></label><label class="wide">写真（任意）<input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif"><span class="field-note">JPG・PNG・WebP・GIF、5MBまで</span></label><button class="button primary" type="submit">記事を追加</button><p id="post-status" class="status form-status" role="status"></p></form><div id="admin-post-list" class="list"></div></section>
       <section class="panel" id="panel-messages"><div class="title"><div><p class="eyebrow">INBOX</p><h2>受信内容</h2></div><button id="clear-messages" class="button danger small" type="button">すべて削除</button></div><div id="admin-message-list" class="list"></div></section>
     </div>
   </main>

@@ -1,0 +1,6 @@
+input[type="file"] { padding: .65rem; }
+.field-note { color: var(--muted); font-size: .72rem; font-weight: 400; }
+.form-status { align-self: center; margin: 0; }
+.post-thumb { width: 132px; height: 96px; flex: 0 0 auto; object-fit: cover; border-radius: 12px; background: #eef0f8; }
+button:disabled { opacity: .55; cursor: wait; }
+@media (max-width: 560px) { .post-thumb { width: 100%; height: 180px; } }
