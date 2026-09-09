@@ -3,4 +3,5 @@ input[type="file"] { padding: .65rem; }
 .form-status { align-self: center; margin: 0; }
 .post-thumb { width: 132px; height: 96px; flex: 0 0 auto; object-fit: cover; border-radius: 12px; background: #eef0f8; }
 button:disabled { opacity: .55; cursor: wait; }
+.text-button { border: 0; background: transparent; color: #5725c3; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 @media (max-width: 560px) { .post-thumb { width: 100%; height: 180px; } }

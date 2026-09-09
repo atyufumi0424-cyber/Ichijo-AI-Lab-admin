@@ -53,17 +53,26 @@ async function initAdmin() {
   const screen = document.querySelector('#login-screen');
   const loginForm = document.querySelector('#login-form');
   const loginStatus = document.querySelector('#login-status');
+  const resetForm = document.querySelector('#reset-form');
+  const resetStatus = document.querySelector('#reset-status');
+  let recoveryMode = location.hash.includes('type=recovery');
   const show = async session => {
     const signedIn = Boolean(session);
-    screen.hidden = signedIn;
-    shell.hidden = !signedIn;
-    document.querySelector('.header').classList.toggle('signed-in', signedIn);
+    const resetting = signedIn && recoveryMode;
+    screen.hidden = signedIn && !resetting;
+    loginForm.hidden = resetting;
+    resetForm.hidden = !resetting;
+    shell.hidden = !signedIn || resetting;
+    document.querySelector('.header').classList.toggle('signed-in', signedIn && !resetting);
     document.querySelector('#admin-email').textContent = session?.user?.email || '';
-    if (signedIn) await render();
+    if (signedIn && !resetting) await render();
   };
   const {data: {session}} = await db.auth.getSession();
   await show(session);
-  db.auth.onAuthStateChange((_event, currentSession) => setTimeout(() => show(currentSession), 0));
+  db.auth.onAuthStateChange((authEvent, currentSession) => {
+    if (authEvent === 'PASSWORD_RECOVERY') recoveryMode = true;
+    setTimeout(() => show(currentSession), 0);
+  });
 
   loginForm.addEventListener('submit', async event => {
     event.preventDefault();
@@ -71,6 +80,30 @@ async function initAdmin() {
     const password = new FormData(loginForm).get('password');
     const {error} = await db.auth.signInWithPassword({email: config.adminEmail, password});
     loginStatus.textContent = error ? 'パスワードが正しくありません。' : '';
+  });
+  document.querySelector('#forgot-password').addEventListener('click', async () => {
+    loginStatus.textContent = '再設定メールを送信しています…';
+    const {error} = await db.auth.resetPasswordForEmail(config.adminEmail, {redirectTo: config.adminUrl});
+    loginStatus.textContent = error ? `送信できませんでした：${error.message}` : '再設定メールを送りました。メール内のリンクを開いてください。';
+  });
+  resetForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(resetForm));
+    if (values.password !== values.confirmation) {
+      resetStatus.textContent = '2つのパスワードが一致していません。';
+      return;
+    }
+    resetStatus.textContent = 'パスワードを変更しています…';
+    const {error} = await db.auth.updateUser({password: values.password});
+    if (error) {
+      resetStatus.textContent = `変更できませんでした：${error.message}`;
+      return;
+    }
+    recoveryMode = false;
+    history.replaceState(null, '', location.pathname);
+    resetForm.reset();
+    const {data: {session: currentSession}} = await db.auth.getSession();
+    await show(currentSession);
   });
   document.querySelector('#logout-button').addEventListener('click', () => db.auth.signOut());
   document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {

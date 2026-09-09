@@ -7,3 +7,5 @@ Ichijo AI Lab閲覧サイトとは別に運用する管理者専用サイトで�
 SupabaseのSQL Editorで `supabase-setup.sql` を全て実行してください。初回設定後に再実行してもよい内容になっています。ブログ画像はSupabase Storageの `blog-images` バケットへ保存され、JPG・PNG・WebP・GIF（各5MBまで）に対応します。
 
 ログイン画面にメールアドレスは表示しませんが、認証と権限判定には `assets/config.js` の管理者メールアドレスを内部で使用します。パスワードはソースコードに保存されません。
+
+パスワード再設定メールを使うには、Supabaseの Authentication → URL Configuration で Site URL と Redirect URLs に `https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-admin/` を登録してください。

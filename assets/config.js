@@ -1,1 +1,1 @@
-window.ICHJO_LAB_CONFIG={supabaseUrl:'https://zfmxesxlvhhjqgeflmcd.supabase.co',supabasePublishableKey:'sb_publishable_N_q1DFrV4pfMTLdD2fGvMA_NgfD2qU6',adminEmail:'atyufumi0424@gmail.com'};
+window.ICHJO_LAB_CONFIG={supabaseUrl:'https://zfmxesxlvhhjqgeflmcd.supabase.co',supabasePublishableKey:'sb_publishable_N_q1DFrV4pfMTLdD2fGvMA_NgfD2qU6',adminEmail:'atyufumi0424@gmail.com',adminUrl:'https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-admin/'};
