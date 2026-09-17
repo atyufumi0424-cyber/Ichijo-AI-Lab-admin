@@ -14,10 +14,52 @@
   object-fit: contain;
 }
 
+.brand-wordmark {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+}
+
+.brand-name {
+  color: #17122d;
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: -.055em;
+}
+
+.brand-lab {
+  margin-top: .28rem;
+  background: linear-gradient(90deg, #0bbdd6, #7056ee 52%, #dd43bb);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: .5rem;
+  font-weight: 900;
+  letter-spacing: .24em;
+}
+
+.brand-mode {
+  margin-left: .15rem;
+  padding: .18rem .4rem;
+  border: 1px solid rgba(113, 56, 232, .2);
+  border-radius: 999px;
+  color: #6544bd;
+  font-size: .48rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
 @media (max-width: 560px) {
   .brand-mark {
     width: 38px;
     height: 38px;
     flex-basis: 38px;
+  }
+
+
+  .brand-mode {
+    display: none;
   }
 }
