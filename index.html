@@ -2,25 +2,25 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f4f7ff">
-  <title>Ichijo AI Lab 管理者ページ</title><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/image.css">
+  <title>Ichijo AI Lab 管理者ページ</title><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/image.css"><link rel="stylesheet" href="assets/logo.css"><link rel="icon" href="assets/logo-mark.svg" type="image/svg+xml">
 </head>
 <body>
   <section id="login-screen" class="login-screen">
     <form id="login-form" class="login-card">
-      <a class="brand" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/"><span class="brand-mark">AI</span><span>Ichijo AI Lab</span></a>
+      <a class="brand" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/"><img class="brand-mark" src="assets/logo-mark.svg" alt="" width="42" height="42"><span>Ichijo AI Lab</span></a>
       <p class="eyebrow">ADMIN LOGIN</p><h1>管理者ログイン</h1><p>管理者パスワードを入力してください。</p>
       <label>パスワード<input type="password" name="password" autocomplete="current-password" minlength="8" required autofocus></label>
       <button class="button primary" type="submit">ログイン</button><button id="forgot-password" class="text-button" type="button">パスワードを忘れた場合</button><p id="login-status" class="status" role="status"></p>
     </form>
     <form id="reset-form" class="login-card" hidden>
-      <a class="brand" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/"><span class="brand-mark">AI</span><span>Ichijo AI Lab</span></a>
+      <a class="brand" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/"><img class="brand-mark" src="assets/logo-mark.svg" alt="" width="42" height="42"><span>Ichijo AI Lab</span></a>
       <p class="eyebrow">RESET PASSWORD</p><h1>新しいパスワード</h1><p>8文字以上の新しいパスワードを2回入力してください。</p>
       <label>新しいパスワード<input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
       <label>新しいパスワード（確認）<input type="password" name="confirmation" autocomplete="new-password" minlength="8" required></label>
       <button class="button primary" type="submit">パスワードを変更</button><p id="reset-status" class="status" role="status"></p>
     </form>
   </section>
-  <header class="header"><a class="brand" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/"><span class="brand-mark">AI</span><span>Ichijo AI Lab Admin</span></a><div class="header-actions"><span id="admin-email"></span><button id="logout-button" class="button danger small" type="button">ログアウト</button><a class="button ghost small" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/">閲覧サイトへ</a></div></header>
+  <header class="header"><a class="brand" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/"><img class="brand-mark" src="assets/logo-mark.svg" alt="" width="42" height="42"><span>Ichijo AI Lab Admin</span></a><div class="header-actions"><span id="admin-email"></span><button id="logout-button" class="button danger small" type="button">ログアウト</button><a class="button ghost small" href="https://atyufumi0424-cyber.github.io/Ichijo-AI-Lab-page/">閲覧サイトへ</a></div></header>
   <main class="shell" hidden>
     <aside class="sidebar"><p class="eyebrow">ADMIN CONSOLE</p><h1>管理者ページ</h1><nav><button class="tab active" data-tab="overview">概要</button><button class="tab" data-tab="apps">アプリ管理</button><button class="tab" data-tab="posts">ブログ管理</button><button class="tab" data-tab="messages">受信内容</button></nav></aside>
     <div class="content">

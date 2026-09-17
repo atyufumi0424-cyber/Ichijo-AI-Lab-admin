@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Ichijo AI Lab ロゴ</title>
+  <desc id="desc">IchijoのIとAIのA、未来へ伸びる光を組み合わせたシンボル</desc>
+  <defs>
+    <linearGradient id="brand-gradient" x1="8" y1="54" x2="57" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#16cbe3"/>
+      <stop offset="0.52" stop-color="#7357f5"/>
+      <stop offset="1" stop-color="#ed4bc7"/>
+    </linearGradient>
+  </defs>
+  <path d="M14 14v36" fill="none" stroke="url(#brand-gradient)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M27 50 40.5 14 54 50M33.5 35h14" fill="none" stroke="url(#brand-gradient)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="54" cy="10" r="4" fill="#ed4bc7"/>
+</svg>
