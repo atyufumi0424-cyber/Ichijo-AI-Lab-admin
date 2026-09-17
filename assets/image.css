@@ -1,4 +1,5 @@
 input[type="file"] { padding: .65rem; }
+.login-card[hidden] { display: none; }
 .field-note { color: var(--muted); font-size: .72rem; font-weight: 400; }
 .form-status { align-self: center; margin: 0; }
 .post-thumb { width: 132px; height: 96px; flex: 0 0 auto; object-fit: cover; border-radius: 12px; background: #eef0f8; }
