@@ -18,9 +18,57 @@ function prepareAppCode(raw = '') {
   return `<!doctype html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${code}</style></head><body><main id="app">アプリのHTMLを追加してください。</main></body></html>`;
 }
 
-function createStoragePath(file) {
-  const extension = (file.name.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '').toLowerCase();
-  return `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extension}`;
+function readBlobAsDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('画像を読み込めませんでした。'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+}
+
+async function optimiseImage(file) {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error('画像を読み込めませんでした。'));
+      element.src = objectUrl;
+    });
+    const maxSide = 1400;
+    const ratio = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+    let width = Math.max(1, Math.round(image.naturalWidth * ratio));
+    let height = Math.max(1, Math.round(image.naturalHeight * ratio));
+    let quality = 0.82;
+    let blob;
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+      blob = await canvasToBlob(canvas, quality);
+      if (!blob) throw new Error('画像を変換できませんでした。');
+      if (blob.size <= 700 * 1024) break;
+      if (quality > 0.55) quality -= 0.1;
+      else {
+        width = Math.max(1, Math.round(width * 0.82));
+        height = Math.max(1, Math.round(height * 0.82));
+        quality = 0.72;
+      }
+    }
+    if (!blob || blob.size > 900 * 1024) throw new Error('画像を十分に小さくできませんでした。別の画像をお試しください。');
+    return readBlobAsDataURL(blob);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 async function render() {
@@ -130,7 +178,7 @@ async function initAdmin() {
     const file = form.elements.image.files[0];
     const status = document.querySelector('#post-status');
     const button = form.querySelector('button[type="submit"]');
-    let imagePath = '';
+    const imagePath = '';
     let imageUrl = '';
     if (file && !imageTypes.has(file.type)) {
       status.textContent = 'JPG・PNG・WebP・GIFの画像を選んでください。';
@@ -141,15 +189,11 @@ async function initAdmin() {
       return;
     }
     button.disabled = true;
-    status.textContent = file ? '画像をアップロードしています…' : '記事を保存しています…';
+    status.textContent = file ? '画像を最適化しています…' : '記事を保存しています…';
     try {
       if (file) {
-        imagePath = createStoragePath(file);
-        const {error: uploadError} = await db.storage.from('blog-images').upload(imagePath, file, {
-          cacheControl: '3600', upsert: false, contentType: file.type
-        });
-        if (uploadError) throw uploadError;
-        imageUrl = db.storage.from('blog-images').getPublicUrl(imagePath).data.publicUrl;
+        imageUrl = await optimiseImage(file);
+        status.textContent = '記事を保存しています…';
       }
       const {error} = await db.from('posts').insert({
         title: values.title, published_on: values.date, excerpt: values.excerpt,
@@ -160,7 +204,6 @@ async function initAdmin() {
       status.textContent = '記事を追加しました。';
       await render();
     } catch (error) {
-      if (imagePath) await db.storage.from('blog-images').remove([imagePath]);
       status.textContent = `追加できませんでした：${error.message}`;
     } finally {
       button.disabled = false;
