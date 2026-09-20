@@ -2,12 +2,28 @@ const config = window.ICHJO_LAB_CONFIG || {};
 const db = window.supabase?.createClient(config.supabaseUrl, config.supabasePublishableKey);
 const imageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const maxImageSize = 5 * 1024 * 1024;
+const postContentPrefix = '__ICHJO_POST_V1__:';
 const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
 }[character]));
 const formatDate = value => new Intl.DateTimeFormat('ja-JP', {
   year: 'numeric', month: 'long', day: 'numeric'
 }).format(new Date(`${value}T00:00:00`));
+
+function packPostContent(text, image = '') {
+  return image ? `${postContentPrefix}${JSON.stringify({text, image})}` : text;
+}
+
+function parsePostContent(post) {
+  if (post.image_url) return {text: post.excerpt || '', image: post.image_url};
+  if (!String(post.excerpt || '').startsWith(postContentPrefix)) return {text: post.excerpt || '', image: ''};
+  try {
+    const content = JSON.parse(post.excerpt.slice(postContentPrefix.length));
+    return {text: content.text || '', image: content.image || ''};
+  } catch {
+    return {text: post.excerpt || '', image: ''};
+  }
+}
 
 function prepareAppCode(raw = '') {
   const code = raw.trim();
@@ -87,9 +103,10 @@ async function render() {
   document.querySelector('#admin-app-list').innerHTML = apps.length ? apps.map(app => `
     <article><div><small>${escapeHTML(app.category)}${app.code ? ' · CODE READY' : ''}</small><h3>${escapeHTML(app.title)}</h3><p>${escapeHTML(app.description)}</p>${app.code ? `<a href="runner.html?id=${encodeURIComponent(app.id)}" target="_blank">プレビューを開く ↗</a>` : ''}</div><button class="delete" data-delete-app="${app.id}">削除</button></article>
   `).join('') : '<p class="empty">アプリはありません。</p>';
-  document.querySelector('#admin-post-list').innerHTML = posts.length ? posts.map(post => `
-    <article>${post.image_url ? `<img class="post-thumb" src="${escapeHTML(post.image_url)}" alt="">` : ''}<div><small>${escapeHTML(formatDate(post.published_on))}</small><h3>${escapeHTML(post.title)}</h3><p>${escapeHTML(post.excerpt)}</p></div><button class="delete" data-delete-post="${post.id}" data-image-path="${escapeHTML(post.image_path || '')}">削除</button></article>
-  `).join('') : '<p class="empty">記事はありません。</p>';
+  document.querySelector('#admin-post-list').innerHTML = posts.length ? posts.map(post => {
+    const content = parsePostContent(post);
+    return `<article>${content.image ? `<img class="post-thumb" src="${escapeHTML(content.image)}" alt="">` : ''}<div><small>${escapeHTML(formatDate(post.published_on))}</small><h3>${escapeHTML(post.title)}</h3><p>${escapeHTML(content.text)}</p></div><button class="delete" data-delete-post="${post.id}">削除</button></article>`;
+  }).join('') : '<p class="empty">記事はありません。</p>';
   document.querySelector('#admin-message-list').innerHTML = messages.length ? messages.map(message => `
     <article><div><small>${escapeHTML(message.kind)} · ${escapeHTML(new Date(message.created_at).toLocaleString('ja-JP'))}</small><h3>${escapeHTML(message.name)}</h3><p><a href="mailto:${escapeHTML(message.email)}">${escapeHTML(message.email)}</a>${message.organization ? ` · ${escapeHTML(message.organization)}` : ''}</p><p>${escapeHTML(message.message)}</p></div><button class="delete" data-delete-message="${message.id}">削除</button></article>
   `).join('') : '<p class="empty">受信内容はありません。</p>';
@@ -195,8 +212,8 @@ async function initAdmin() {
         status.textContent = '記事を保存しています…';
       }
       const {error} = await db.from('posts').insert({
-        title: values.title, published_on: values.date, excerpt: values.excerpt,
-        image_url: imageUrl
+        title: values.title, published_on: values.date,
+        excerpt: packPostContent(values.excerpt, imageUrl)
       });
       if (error) throw error;
       form.reset();
@@ -218,10 +235,8 @@ async function initAdmin() {
     }
     if (postId) {
       if (!confirm('この記事を削除しますか？')) return;
-      const imagePath = event.target.dataset.imagePath || '';
       const {error} = await db.from('posts').delete().eq('id', postId);
       if (error) return alert(`削除できませんでした：${error.message}`);
-      if (imagePath) await db.storage.from('blog-images').remove([imagePath]);
       await render();
     }
     if (messageId) {
