@@ -178,7 +178,6 @@ async function initAdmin() {
     const file = form.elements.image.files[0];
     const status = document.querySelector('#post-status');
     const button = form.querySelector('button[type="submit"]');
-    const imagePath = '';
     let imageUrl = '';
     if (file && !imageTypes.has(file.type)) {
       status.textContent = 'JPG・PNG・WebP・GIFの画像を選んでください。';
@@ -197,7 +196,7 @@ async function initAdmin() {
       }
       const {error} = await db.from('posts').insert({
         title: values.title, published_on: values.date, excerpt: values.excerpt,
-        image_url: imageUrl, image_path: imagePath
+        image_url: imageUrl
       });
       if (error) throw error;
       form.reset();
