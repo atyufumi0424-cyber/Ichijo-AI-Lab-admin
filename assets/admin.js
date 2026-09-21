@@ -25,6 +25,13 @@ function parsePostContent(post) {
   }
 }
 
+function makeResponsiveAppDocument(code = '') {
+  const responsiveHead = `<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style id="ichijo-responsive-app">html,body{max-width:100%;min-width:0;overflow-x:hidden}body{margin:0!important;padding:clamp(8px,3vw,18px)!important}*,*::before,*::after{box-sizing:border-box}img,video,svg,canvas,iframe{max-width:100%!important;height:auto}main,.container,.wrapper,.app,[id*="game"],[class*="game"]{max-width:100%!important}@media(max-width:600px){h1{font-size:clamp(1.5rem,8vw,2.4rem)!important}button,input,select,textarea{max-width:100%;font-size:16px}}</style>`;
+  if (/<\/head>/i.test(code)) return code.replace(/<\/head>/i, `${responsiveHead}</head>`);
+  if (/<body[\s>]/i.test(code)) return code.replace(/<body([^>]*)>/i, `${responsiveHead}<body$1>`);
+  return `${responsiveHead}${code}`;
+}
+
 function prepareAppCode(raw = '') {
   const code = raw.trim();
   if (!code) return '';
@@ -266,7 +273,7 @@ async function initRunner() {
   }
   document.title = `${app.title} | Ichijo AI Lab`;
   document.querySelector('#runner-title').textContent = app.title;
-  frame.srcdoc = app.code;
+  frame.srcdoc = makeResponsiveAppDocument(app.code);
 }
 
 initAdmin();
