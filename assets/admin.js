@@ -3,6 +3,7 @@ const db = window.supabase?.createClient(config.supabaseUrl, config.supabasePubl
 const imageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const maxImageSize = 5 * 1024 * 1024;
 const postContentPrefix = '__ICHJO_POST_V1__:';
+const appContentPrefix = '__ICHJO_APP_V1__:';
 const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
 }[character]));
@@ -10,18 +11,32 @@ const formatDate = value => new Intl.DateTimeFormat('ja-JP', {
   year: 'numeric', month: 'long', day: 'numeric'
 }).format(new Date(`${value}T00:00:00`));
 
-function packPostContent(text, image = '') {
-  return image ? `${postContentPrefix}${JSON.stringify({text, image})}` : text;
+function packPostContent(text, image = '', status = 'published') {
+  return `${postContentPrefix}${JSON.stringify({text, image, status})}`;
 }
 
 function parsePostContent(post) {
-  if (post.image_url) return {text: post.excerpt || '', image: post.image_url};
-  if (!String(post.excerpt || '').startsWith(postContentPrefix)) return {text: post.excerpt || '', image: ''};
+  if (post.image_url) return {text: post.excerpt || '', image: post.image_url, status: 'published'};
+  if (!String(post.excerpt || '').startsWith(postContentPrefix)) return {text: post.excerpt || '', image: '', status: 'published'};
   try {
     const content = JSON.parse(post.excerpt.slice(postContentPrefix.length));
-    return {text: content.text || '', image: content.image || ''};
+    return {text: content.text || '', image: content.image || '', status: content.status === 'draft' ? 'draft' : 'published'};
   } catch {
-    return {text: post.excerpt || '', image: ''};
+    return {text: post.excerpt || '', image: '', status: 'published'};
+  }
+}
+
+function packAppDescription(description, status = 'published') {
+  return `${appContentPrefix}${JSON.stringify({description, status})}`;
+}
+
+function parseAppContent(app) {
+  if (!String(app.description || '').startsWith(appContentPrefix)) return {description: app.description || '', status: 'published'};
+  try {
+    const content = JSON.parse(app.description.slice(appContentPrefix.length));
+    return {description: content.description || '', status: content.status === 'draft' ? 'draft' : 'published'};
+  } catch {
+    return {description: app.description || '', status: 'published'};
   }
 }
 
@@ -104,15 +119,16 @@ async function render() {
     document.querySelector('#panel-overview .card').innerHTML = '<h3>データを読み込めませんでした</h3><p>Supabaseの設定と管理者メールアドレスをご確認ください。</p>';
     return;
   }
-  document.querySelector('#app-count').textContent = apps.length;
-  document.querySelector('#post-count').textContent = posts.length;
+  document.querySelector('#app-count').textContent = apps.filter(app => parseAppContent(app).status === 'published').length;
+  document.querySelector('#post-count').textContent = posts.filter(post => parsePostContent(post).status === 'published').length;
   document.querySelector('#message-count').textContent = messages.length;
-  document.querySelector('#admin-app-list').innerHTML = apps.length ? apps.map(app => `
-    <article><div><small>${escapeHTML(app.category)}${app.code ? ' · CODE READY' : ''}</small><h3>${escapeHTML(app.title)}</h3><p>${escapeHTML(app.description)}</p>${app.code ? `<a href="runner.html?id=${encodeURIComponent(app.id)}" target="_blank">プレビューを開く ↗</a>` : ''}</div><button class="delete" data-delete-app="${app.id}">削除</button></article>
-  `).join('') : '<p class="empty">アプリはありません。</p>';
+  document.querySelector('#admin-app-list').innerHTML = apps.length ? apps.map(app => {
+    const content = parseAppContent(app);
+    return `<article><div><small>${escapeHTML(app.category)}${app.code ? ' · CODE READY' : ''} <span class="status-badge ${content.status}">${content.status === 'draft' ? '下書き' : '公開中'}</span></small><h3>${escapeHTML(app.title)}</h3><p>${escapeHTML(content.description)}</p>${app.code ? `<a href="runner.html?id=${encodeURIComponent(app.id)}" target="_blank">プレビューを開く ↗</a>` : ''}</div><div class="item-actions"><button class="edit" data-edit-app="${app.id}">編集</button><button class="delete" data-delete-app="${app.id}">削除</button></div></article>`;
+  }).join('') : '<p class="empty">アプリはありません。</p>';
   document.querySelector('#admin-post-list').innerHTML = posts.length ? posts.map(post => {
     const content = parsePostContent(post);
-    return `<article>${content.image ? `<img class="post-thumb" src="${escapeHTML(content.image)}" alt="">` : ''}<div><small>${escapeHTML(formatDate(post.published_on))}</small><h3>${escapeHTML(post.title)}</h3><p>${escapeHTML(content.text)}</p></div><button class="delete" data-delete-post="${post.id}">削除</button></article>`;
+    return `<article>${content.image ? `<img class="post-thumb" src="${escapeHTML(content.image)}" alt="">` : ''}<div><small>${escapeHTML(formatDate(post.published_on))} <span class="status-badge ${content.status}">${content.status === 'draft' ? '下書き' : '公開中'}</span></small><h3>${escapeHTML(post.title)}</h3><p>${escapeHTML(content.text)}</p></div><div class="item-actions"><button class="edit" data-edit-post="${post.id}">編集</button><button class="delete" data-delete-post="${post.id}">削除</button></div></article>`;
   }).join('') : '<p class="empty">記事はありません。</p>';
   document.querySelector('#admin-message-list').innerHTML = messages.length ? messages.map(message => `
     <article><div><small>${escapeHTML(message.kind)} · ${escapeHTML(new Date(message.created_at).toLocaleString('ja-JP'))}</small><h3>${escapeHTML(message.name)}</h3><p><a href="mailto:${escapeHTML(message.email)}">${escapeHTML(message.email)}</a>${message.organization ? ` · ${escapeHTML(message.organization)}` : ''}</p><p>${escapeHTML(message.message)}</p></div><button class="delete" data-delete-message="${message.id}">削除</button></article>
@@ -128,6 +144,7 @@ async function initAdmin() {
   const resetForm = document.querySelector('#reset-form');
   const resetStatus = document.querySelector('#reset-status');
   let recoveryMode = location.hash.includes('type=recovery');
+  let editingPostImage = '';
   const show = async session => {
     const signedIn = Boolean(session);
     const resetting = signedIn && recoveryMode;
@@ -186,13 +203,18 @@ async function initAdmin() {
     event.preventDefault();
     const form = event.currentTarget;
     const values = Object.fromEntries(new FormData(form));
-    const {error} = await db.from('apps').insert({
-      title: values.title, category: values.category, description: values.description,
+    const record = {
+      title: values.title, category: values.category, description: packAppDescription(values.description, values.status),
       url: values.url || '', code: prepareAppCode(values.code),
       accent: ['pink', 'cyan', 'yellow', 'purple'][Math.floor(Math.random() * 4)]
-    });
-    if (error) return alert(`追加できませんでした：${error.message}`);
+    };
+    const request = values.id ? db.from('apps').update(record).eq('id', values.id) : db.from('apps').insert(record);
+    const {error} = await request;
+    if (error) return alert(`保存できませんでした：${error.message}`);
     form.reset();
+    form.elements.id.value = '';
+    document.querySelector('#app-submit').textContent = '処理してアプリを追加';
+    document.querySelector('#app-cancel').hidden = true;
     await render();
   });
   document.querySelector('#post-form').addEventListener('submit', async event => {
@@ -218,13 +240,22 @@ async function initAdmin() {
         imageUrl = await optimiseImage(file);
         status.textContent = '記事を保存しています…';
       }
-      const {error} = await db.from('posts').insert({
+      if (values.remove_image === 'on') editingPostImage = '';
+      const record = {
         title: values.title, published_on: values.date,
-        excerpt: packPostContent(values.excerpt, imageUrl)
-      });
+        excerpt: packPostContent(values.excerpt, imageUrl || editingPostImage, values.status)
+      };
+      const request = values.id ? db.from('posts').update(record).eq('id', values.id) : db.from('posts').insert(record);
+      const {error} = await request;
       if (error) throw error;
+      const wasEditing = Boolean(values.id);
       form.reset();
-      status.textContent = '記事を追加しました。';
+      form.elements.id.value = '';
+      editingPostImage = '';
+      document.querySelector('#post-submit').textContent = '記事を追加';
+      document.querySelector('#post-cancel').hidden = true;
+      document.querySelector('#existing-image-note').hidden = true;
+      status.textContent = wasEditing ? '記事を更新しました。' : '記事を追加しました。';
       await render();
     } catch (error) {
       status.textContent = `追加できませんでした：${error.message}`;
@@ -235,6 +266,8 @@ async function initAdmin() {
   document.addEventListener('click', async event => {
     const appId = event.target.dataset?.deleteApp;
     const postId = event.target.dataset?.deletePost;
+    const editAppId = event.target.dataset?.editApp;
+    const editPostId = event.target.dataset?.editPost;
     const messageId = event.target.dataset?.deleteMessage;
     if (appId) {
       await db.from('apps').delete().eq('id', appId);
@@ -250,6 +283,53 @@ async function initAdmin() {
       await db.from('messages').delete().eq('id', messageId);
       await render();
     }
+    if (editAppId) {
+      const {data: app} = await db.from('apps').select('*').eq('id', editAppId).maybeSingle();
+      if (!app) return;
+      const content = parseAppContent(app);
+      const form = document.querySelector('#app-form');
+      form.elements.id.value = app.id;
+      form.elements.title.value = app.title;
+      form.elements.category.value = app.category;
+      form.elements.description.value = content.description;
+      form.elements.url.value = app.url || '';
+      form.elements.code.value = app.code || '';
+      form.elements.status.value = content.status;
+      document.querySelector('#app-submit').textContent = '変更を保存';
+      document.querySelector('#app-cancel').hidden = false;
+      form.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+    if (editPostId) {
+      const {data: post} = await db.from('posts').select('*').eq('id', editPostId).maybeSingle();
+      if (!post) return;
+      const content = parsePostContent(post);
+      const form = document.querySelector('#post-form');
+      form.elements.id.value = post.id;
+      form.elements.title.value = post.title;
+      form.elements.date.value = post.published_on;
+      form.elements.excerpt.value = content.text;
+      form.elements.status.value = content.status;
+      editingPostImage = content.image;
+      document.querySelector('#existing-image-note').hidden = !content.image;
+      document.querySelector('#post-submit').textContent = '変更を保存';
+      document.querySelector('#post-cancel').hidden = false;
+      document.querySelector('#post-status').textContent = '';
+      form.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+  });
+  document.querySelector('#app-cancel').addEventListener('click', () => {
+    const form = document.querySelector('#app-form');
+    form.reset(); form.elements.id.value = '';
+    document.querySelector('#app-submit').textContent = '処理してアプリを追加';
+    document.querySelector('#app-cancel').hidden = true;
+  });
+  document.querySelector('#post-cancel').addEventListener('click', () => {
+    const form = document.querySelector('#post-form');
+    form.reset(); form.elements.id.value = ''; editingPostImage = '';
+    document.querySelector('#post-submit').textContent = '記事を追加';
+    document.querySelector('#post-cancel').hidden = true;
+    document.querySelector('#existing-image-note').hidden = true;
+    document.querySelector('#post-status').textContent = '';
   });
   document.querySelector('#clear-messages').addEventListener('click', async () => {
     if (!confirm('受信内容をすべて削除しますか？')) return;
