@@ -165,10 +165,43 @@ async function initAdmin() {
 
   loginForm.addEventListener('submit', async event => {
     event.preventDefault();
-    loginStatus.textContent = '確認しています…';
+    const button = loginForm.querySelector('button[type="submit"]');
     const password = new FormData(loginForm).get('password');
-    const {error} = await db.auth.signInWithPassword({email: config.adminEmail, password});
-    loginStatus.textContent = error ? 'パスワードが正しくありません。' : '';
+    if (!config.adminEmail || !config.supabaseUrl || !config.supabasePublishableKey) {
+      loginStatus.textContent = '認証設定を読み込めませんでした。管理者に設定の確認を依頼してください。';
+      return;
+    }
+    button.disabled = true;
+    loginStatus.textContent = 'ログインを確認しています…';
+    try {
+      const {data, error} = await Promise.race([
+        db.auth.signInWithPassword({email: config.adminEmail, password}),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 15000))
+      ]);
+      if (error) {
+        const message = String(error.message || '');
+        if (error.status === 400 && /invalid login credentials/i.test(message)) {
+          loginStatus.textContent = 'メールアドレスまたはパスワードが一致しません。パスワード再設定もお試しください。';
+        } else if (error.status === 429) {
+          loginStatus.textContent = 'ログイン試行が制限されています。少し時間をおいてから再試行してください。';
+        } else {
+          loginStatus.textContent = '認証エラー：' + message;
+        }
+        return;
+      }
+      if (!data?.session) {
+        loginStatus.textContent = '認証は完了しましたが、セッションを取得できませんでした。Safariで開き直してください。';
+        return;
+      }
+      loginStatus.textContent = '';
+      await show(data.session);
+    } catch (error) {
+      loginStatus.textContent = error.message === 'LOGIN_TIMEOUT'
+        ? '通信がタイムアウトしました。回線を確認し、Safariで開き直してください。'
+        : '通信エラー：' + (error.message || '不明なエラー');
+    } finally {
+      button.disabled = false;
+    }
   });
   document.querySelector('#forgot-password').addEventListener('click', async () => {
     loginStatus.textContent = '再設定メールを送信しています…';
